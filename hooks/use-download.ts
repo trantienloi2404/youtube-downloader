@@ -59,7 +59,7 @@ const useDownload = () => {
       while (true) {
         const { done, value } = await reader.read()
         if (done) {
-          const response = await fetch('/api/download', {
+          const response = await fetch(`/api/download?file=${contentId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
           })

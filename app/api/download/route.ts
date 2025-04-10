@@ -1,19 +1,19 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import { downloadService } from '@/lib/download.service'
+import os from 'os'
+import path from 'path'
 
 export async function POST(request: NextRequest) {
   try {
     const { contentId, formatId, options } = await request.json()
-    if (!contentId || !formatId) {
+    if (!contentId || !formatId)
       return NextResponse.json({ error: 'Content id and format id are required' }, { status: 400 })
-    }
 
     const encoder = new TextEncoder()
     const stream = new TransformStream()
     const writer = stream.writable.getWriter()
 
-    // Start download in background
     downloadService
       .downloadVideo(contentId, formatId, options, async (stats) => {
         await writer.write(encoder.encode(`data: ${JSON.stringify(stats)}\n\n`))
@@ -35,35 +35,31 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Download error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to process download request' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: error.message || 'Failed to process download request' }, { status: 500 })
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = new URL(request.url).searchParams
-    const filePath = searchParams.get('filePath')
-    
-    if (!filePath) {
-      return NextResponse.json({ error: 'File path is required' }, { status: 400 })
-    }
+    const filePath = searchParams.get('file')
 
-    if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: 'File not found' }, { status: 404 })
-    }
+    if (!filePath) return NextResponse.json({ error: 'File path is required' }, { status: 400 })
+    const tempDir = path.join(os.tmpdir(), 'youtube-downloader')
+    const files = fs.readdirSync(tempDir)
+    const matchingFile = files.find((file) => file.startsWith(filePath))
+    if (!matchingFile) return NextResponse.json({ error: 'File not found' }, { status: 404 })
 
-    const stats = await fs.promises.stat(filePath)
-    const fileStream = fs.createReadStream(filePath)
+    const actualPath = path.join(tempDir, matchingFile)
+    const stats = await fs.promises.stat(actualPath)
+    const fileStream = fs.createReadStream(actualPath)
 
     const stream = new ReadableStream({
       start(controller) {
         fileStream.on('data', (chunk) => controller.enqueue(chunk))
         fileStream.on('end', async () => {
           controller.close()
-          await downloadService.cleanup(filePath)
+          await downloadService.cleanup(actualPath)
         })
         fileStream.on('error', (err) => controller.error(err))
       },
@@ -72,15 +68,12 @@ export async function GET(request: NextRequest) {
     return new NextResponse(stream, {
       headers: {
         'Content-Type': 'application/octet-stream',
-        'Content-Disposition': `attachment; filename="${filePath.split(/[\\/]/).pop()}"`,
+        'Content-Disposition': `attachment; filename="${actualPath.split(/[\\/]/).pop()}"`,
         'Content-Length': stats.size.toString(),
       },
     })
   } catch (error: any) {
     console.error('File serving error:', error)
-    return NextResponse.json(
-      { error: error.message || 'Failed to serve file' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: error.message || 'Failed to serve file' }, { status: 500 })
   }
 }

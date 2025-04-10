@@ -40,10 +40,10 @@ class DownloadService {
     contentId: string,
     formatId: string,
     options: DownloadOptions,
-    onProgress?: (stats: DownloadStats) => void
+    onProgress?: (stats: DownloadStats) => void,
   ): Promise<string> {
-    const uniqueId = randomUUID()
-    const outputPath = path.join(this.tempDir, `${uniqueId}.%(ext)s`)
+    const uniqueId = contentId || randomUUID()
+    const outputPath = path.join(this.tempDir, `${contentId}-${randomUUID()}.%(ext)s`)
     const args = this.buildYtDlpArgs(contentId, formatId, outputPath, options)
 
     return new Promise((resolve, reject) => {
@@ -53,52 +53,39 @@ class DownloadService {
       ytdlp.stdout.on('data', (data) => {
         const output = data.toString()
         const progressInfo = this.parseProgress(output)
-        
+
         if (progressInfo && Math.abs(progressInfo.progress - lastProgress) >= 2) {
           lastProgress = progressInfo.progress
           onProgress?.(progressInfo)
         }
       })
 
-      ytdlp.stderr.on('data', (data) => {
-        console.error(`yt-dlp error: ${data}`)
-      })
+      ytdlp.stderr.on('data', (data) => console.error(`yt-dlp error: ${data}`))
 
       ytdlp.on('close', async (code) => {
         if (code === 0) {
           try {
             const files = await fs.promises.readdir(this.tempDir)
-            const downloadedFile = files.find(file => file.startsWith(uniqueId))
+            const downloadedFile = files.find((file) => file.startsWith(uniqueId))
             if (downloadedFile) {
               resolve(path.join(this.tempDir, downloadedFile))
-            } else {
-              reject(new Error('Download completed but file not found'))
-            }
+            } else reject(new Error('Download completed but file not found'))
           } catch (error) {
             reject(error)
           }
-        } else {
-          reject(new Error(`Download failed with code ${code}`))
-        }
+        } else reject(new Error(`Download failed with code ${code}`))
       })
     })
   }
 
   private buildYtDlpArgs(contentId: string, formatId: string, outputPath: string, options: DownloadOptions): string[] {
-    const args = [
-      '-f', formatId,
-      contentId,
-      '-o', outputPath,
-      '--no-warnings',
-      '--merge-output-format', 'mp4'
-    ]
+    const args = ['-f', formatId, contentId, '-o', outputPath, '--no-warnings', '--merge-output-format', 'mp4']
 
     if (options.embedThumbnail) args.push('--embed-thumbnail')
     if (options.embedChapter) args.push('--embed-chapters')
     if (options.embedMetadata) args.push('--embed-metadata')
-    if (options.embedSubtitle && options.subtitleLanguage) {
+    if (options.embedSubtitle && options.subtitleLanguage)
       args.push('--embed-subs', '--sub-langs', options.subtitleLanguage)
-    }
 
     return args
   }
@@ -112,7 +99,7 @@ class DownloadService {
         progress: parseFloat(match[1]),
         size: match[2],
         speed: match[3],
-        eta: match[4]
+        eta: match[4],
       }
     }
 
