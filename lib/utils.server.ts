@@ -1,8 +1,8 @@
 import { spawn } from 'child_process'
 
-export async function getVideoInfoById(args: string[]): Promise<any> {
+export async function getVideoInfoById(args: string[], videoId: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    const ytdlp = spawn('yt-dlp', args)
+    const ytdlp = spawn('yt-dlp', [...args, '--', videoId])
     let stdout = ''
     ytdlp.stdout.on('data', (data) => {
       stdout += data.toString()
@@ -22,9 +22,9 @@ export async function getVideoInfoById(args: string[]): Promise<any> {
   })
 }
 
-export async function getPlaylistInfoById(args: string[]): Promise<any> {
+export async function getPlaylistInfoById(args: string[], playlistId: string): Promise<any> {
   return new Promise((resolve, reject) => {
-    const ytdlp = spawn('yt-dlp', args)
+    const ytdlp = spawn('yt-dlp', [...args, '--', playlistId])
     let stdout = ''
     ytdlp.stdout.on('data', (data) => {
       stdout += data.toString()

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function getVideoInfo(videoId: string) {
-  const videoInfo = await getVideoInfoById(['--dump-json', '--no-playlist', '--no-warnings', videoId])
+  const videoInfo = await getVideoInfoById(['--dump-json', '--no-playlist', '--no-warnings'], videoId)
   return {
     id: videoInfo.id,
     title: videoInfo.title,

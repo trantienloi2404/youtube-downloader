@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 }
 
 async function getPlaylistInfo(playlistId: string) {
-  const playlistInfo = await getPlaylistInfoById(['--dump-json', '--flat-playlist', '--no-warnings', playlistId])
+  const playlistInfo = await getPlaylistInfoById(['--dump-json', '--flat-playlist', '--no-warnings'], playlistId)
   const firstVideo = playlistInfo[0]
   return {
     id: playlistId,

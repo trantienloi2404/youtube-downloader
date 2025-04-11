@@ -79,14 +79,16 @@ class DownloadService {
   }
 
   private buildYtDlpArgs(contentId: string, formatId: string, outputPath: string, options: DownloadOptions): string[] {
-    const args = ['-f', formatId, contentId, '-o', outputPath, '--no-warnings', '--merge-output-format', 'mp4']
+    const args = ['-f', formatId, '-o', outputPath, '--no-warnings']
 
     if (options.embedThumbnail) args.push('--embed-thumbnail')
     if (options.embedChapter) args.push('--embed-chapters')
     if (options.embedMetadata) args.push('--embed-metadata')
     if (options.embedSubtitle && options.subtitleLanguage)
       args.push('--embed-subs', '--sub-langs', options.subtitleLanguage)
-
+    if (formatId.includes('+')) args.push('--merge-output-format', 'mp4')
+    else args.push('--extract-audio', '--audio-format', 'mp3')
+    args.push('--', contentId)
     return args
   }
 

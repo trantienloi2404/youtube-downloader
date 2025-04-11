@@ -6,8 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getVideoId(url: string): string {
-  const regExp =
-    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
+  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/
   const match = url.match(regExp)
   return match ? match[1] : ''
 }
