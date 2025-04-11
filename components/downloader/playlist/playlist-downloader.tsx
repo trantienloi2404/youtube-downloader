@@ -1,31 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  Search,
-  Filter,
-  Download,
-  Square,
-  Check,
-  AlertCircle,
-} from 'lucide-react'
+import { Search, Filter, Download, Square, Check, AlertCircle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import PlaylistPreview from './playlist-preview'
 import PlaylistVideoItem from './playlist-video-item'
 import AdvancedOptions from '../advanced-options'
 import FormatSelector from '../format-selector'
-import { AUDIO_FORMATS, VIDEO_FORMATS } from '@/lib/constants'
 
 const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
   const [videos, setVideos] = useState(playlistInfo.videos)
@@ -39,9 +25,7 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
   const [isComplete, setIsComplete] = useState(false)
   const [error, setError] = useState('')
 
-  const filteredVideos = videos.filter((video: any) =>
-    video.title.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredVideos = videos.filter((video: any) => video.title.toLowerCase().includes(searchTerm.toLowerCase()))
   const handleSelectAll = () => {
     setIsAllSelected(!isAllSelected)
     setVideos(
@@ -93,18 +77,14 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
     }, 200)
   }
   const getDownloadButtonText = () => {
-    if (isDownloading)
-      return `Downloading ${videos.filter((v: any) => v.selected).length} videos...`
+    if (isDownloading) return `Downloading ${videos.filter((v: any) => v.selected).length} videos...`
 
     const selectedCount = videos.filter((v: any) => v.selected).length
     const suffix = selectedCount !== 1 ? 's' : ''
 
-    if (selectedVideoFormat && selectedAudioFormat)
-      return `Download ${selectedCount} Video${suffix} with Audio`
-    if (selectedVideoFormat)
-      return `Download ${selectedCount} Video${suffix} Only`
-    if (selectedAudioFormat)
-      return `Download ${selectedCount} Audio${suffix} Only`
+    if (selectedVideoFormat && selectedAudioFormat) return `Download ${selectedCount} Video${suffix} with Audio`
+    if (selectedVideoFormat) return `Download ${selectedCount} Video${suffix} Only`
+    if (selectedAudioFormat) return `Download ${selectedCount} Audio${suffix} Only`
 
     return `Download ${selectedCount} Video${suffix}`
   }
@@ -166,8 +146,7 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
                   video={video}
                   onToggleSelect={() => {
                     const updatedVideos = [...videos]
-                    updatedVideos[index].selected =
-                      !updatedVideos[index].selected
+                    updatedVideos[index].selected = !updatedVideos[index].selected
                     setVideos(updatedVideos)
                     setIsAllSelected(updatedVideos.every((v) => v.selected))
                   }}
@@ -202,12 +181,9 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
             <div className="bg-secondary/50 border-primary/10 space-y-2 rounded-lg border p-4">
               <div className="flex justify-between text-sm">
                 <span>
-                  Downloading {downloadedCount}/
-                  {videos.filter((v: any) => v.selected).length}
+                  Downloading {downloadedCount}/{videos.filter((v: any) => v.selected).length}
                 </span>
-                <span className="text-primary font-medium">
-                  {Math.round(progress)}%
-                </span>
+                <span className="text-primary font-medium">{Math.round(progress)}%</span>
               </div>
               <Progress value={progress} className="h-2" />
             </div>
@@ -219,12 +195,8 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
               <div className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-green-500" />
                 <div>
-                  <p className="font-medium text-green-500">
-                    Download Complete!
-                  </p>
-                  <p className="text-sm text-green-400">
-                    All files have been successfully downloaded.
-                  </p>
+                  <p className="font-medium text-green-500">Download Complete!</p>
+                  <p className="text-sm text-green-400">All files have been successfully downloaded.</p>
                 </div>
               </div>
             </div>

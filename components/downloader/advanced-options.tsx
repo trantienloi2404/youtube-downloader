@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Sliders,
   FileText,
@@ -11,7 +11,6 @@ import {
   Database,
   SubtitlesIcon,
   Image,
-  SkipForward,
   ChartPie,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -47,6 +46,15 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
     embedSubtitle: false,
     subtitleLanguage: '',
   })
+  useEffect(() => {
+    if (options.filename !== filename) {
+      const newOptions = { ...options, filename: filename }
+      setOptions(newOptions)
+      onOptionsChange?.(newOptions)
+    } else {
+      onOptionsChange?.(options)
+    }
+  }, [filename, onOptionsChange])
   const updateOptions = (key: keyof AdvancedOptionsState, value: any) => {
     const newOptions = { ...options, [key]: value }
     setOptions(newOptions)
@@ -108,7 +116,7 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
                 id="thumbnail"
                 className="border-primary/40 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-5 w-5"
                 checked={options.embedThumbnail}
-                onCheckedChange={(checked) => updateOptions('embedThumbnail', checked)}
+                onCheckedChange={(checked) => updateOptions('embedThumbnail', !!checked)}
               />
             </Label>
 
@@ -125,7 +133,7 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
                 id="chapter"
                 className="border-primary/40 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-5 w-5"
                 checked={options.embedChapter}
-                onCheckedChange={(checked) => updateOptions('embedChapter', checked)}
+                onCheckedChange={(checked) => updateOptions('embedChapter', !!checked)}
               />
             </Label>
 
@@ -142,7 +150,7 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
                 id="metadata"
                 className="border-primary/40 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-5 w-5"
                 checked={options.embedMetadata}
-                onCheckedChange={(checked) => updateOptions('embedMetadata', checked)}
+                onCheckedChange={(checked) => updateOptions('embedMetadata', !!checked)}
               />
             </Label>
 
@@ -162,6 +170,9 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
                 onCheckedChange={(checked) => {
                   updateOptions('embedSubtitle', !!checked)
                   setShowSubtitle(!!checked)
+                  if (!!checked) {
+                    updateOptions('subtitleLanguage', '')
+                  }
                 }}
               />
             </Label>
@@ -172,8 +183,8 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
                   <Languages className="text-primary mr-2 h-5 w-5" />
                   Subtitle Options
                 </h4>
-                <div className="mt-4 flex gap-2 space-y-2">
-                  <Label htmlFor="subtitle-language" className="text-sm">
+                <div className="mt-4 grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-2">
+                  <Label htmlFor="subtitle-language" className="text-sm whitespace-nowrap">
                     Subtitle Language
                   </Label>
                   <Select
@@ -189,7 +200,7 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
                         const langValue = item[langKey]
                         return (
                           <SelectItem key={langKey} value={langKey}>
-                            {langValue}
+                            {langValue} ({langKey})
                           </SelectItem>
                         )
                       })}
