@@ -3,6 +3,7 @@ import fs from 'fs'
 import { downloadService } from '@/lib/download.service'
 import os from 'os'
 import path from 'path'
+import { sanitizeFilename } from '@/lib/utils'
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,12 +43,12 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const searchParams = new URL(request.url).searchParams
-    const filePath = searchParams.get('file')
-
-    if (!filePath) return NextResponse.json({ error: 'File path is required' }, { status: 400 })
+    let filename = searchParams.get('filename')
+    if (!filename) return NextResponse.json({ error: 'Filename is required' }, { status: 400 })
+    filename = sanitizeFilename(filename)
     const tempDir = path.join(os.tmpdir(), 'youtube-downloader')
     const files = fs.readdirSync(tempDir)
-    const matchingFile = files.find((file) => file.startsWith(filePath))
+    const matchingFile = files.find((file) => file.startsWith(filename))
     if (!matchingFile) return NextResponse.json({ error: 'File not found' }, { status: 404 })
 
     const actualPath = path.join(tempDir, matchingFile)

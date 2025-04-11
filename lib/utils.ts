@@ -27,3 +27,15 @@ export function triggerDownload(blob: Blob, filename: string) {
   URL.revokeObjectURL(url)
   document.body.removeChild(a)
 }
+
+export function sanitizeFilename(filename: string): string {
+  const invalidFsCharsRegex = /[\\/:*?"<>|\x00-\x1F]/g
+  const problematicCharsRegex = /[\u2014]/g
+  let sanitized = filename.replace(invalidFsCharsRegex, '_')
+  sanitized = sanitized.replace(problematicCharsRegex, '-')
+  sanitized = sanitized
+    .replace(/_+/g, '_')
+    .replace(/^[_ ]+|[_ ]+$/g, '')
+    .trim()
+  return sanitized
+}

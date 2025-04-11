@@ -1,6 +1,6 @@
 'use client'
 
-import { triggerDownload } from '@/lib/utils'
+import { sanitizeFilename, triggerDownload } from '@/lib/utils'
 import { useState } from 'react'
 
 interface DownloadStats {
@@ -10,7 +10,7 @@ interface DownloadStats {
   progress: number
 }
 
-const useDownload = () => {
+const useVideoDownload = () => {
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadComplete, setDownloadComplete] = useState(false)
   const [error, setError] = useState(null)
@@ -21,7 +21,7 @@ const useDownload = () => {
     progress: 0,
   })
 
-  const startDownload = async (isPlaylist: Boolean, contentId: any, formatId: string, advancedOptions: any = {}) => {
+  const startDownload = async (isAudioOnly: Boolean, contentId: any, formatId: string, advancedOptions: any = {}) => {
     try {
       setIsDownloading(true)
       setDownloadStats({
@@ -33,7 +33,7 @@ const useDownload = () => {
       setDownloadComplete(false)
       setError(null)
 
-      const response = await fetch('/api/download', {
+      const response = await fetch('/api/download-video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -41,7 +41,6 @@ const useDownload = () => {
           formatId,
           options: {
             filename: advancedOptions.filename,
-            skipSponsor: advancedOptions.skipSponsor,
             embedThumbnail: advancedOptions.embedThumbnail,
             embedChapter: advancedOptions.embedChapter,
             embedMetadata: advancedOptions.embedMetadata,
@@ -59,10 +58,13 @@ const useDownload = () => {
       while (true) {
         const { done, value } = await reader.read()
         if (done) {
-          const response = await fetch(`/api/download?file=${contentId}`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          })
+          const response = await fetch(
+            `/api/download-video?filename=${sanitizeFilename(advancedOptions.filename || contentId)}`,
+            {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+            },
+          )
           if (!response.ok) {
             const data = await response.json()
             throw new Error(data.error || 'Download failed')
@@ -72,14 +74,10 @@ const useDownload = () => {
           const contentLength = response.headers.get('Content-Length')
           const contentDisposition = response.headers.get('Content-Disposition')
           const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
-          const filename = filenameMatch ? filenameMatch[1] : 'download'
-
-          if (!reader || !contentLength) {
-            throw new Error('Download failed - invalid response')
-          }
+          const filename = filenameMatch ? filenameMatch[1] : contentId
+          if (!reader || !contentLength) throw new Error('Download failed - invalid response')
 
           const chunks: Uint8Array[] = []
-
           while (true) {
             const { done, value } = await reader.read()
             if (done) break
@@ -120,4 +118,4 @@ const useDownload = () => {
   }
 }
 
-export { useDownload }
+export { useVideoDownload }

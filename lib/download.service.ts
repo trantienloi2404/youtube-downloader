@@ -2,7 +2,7 @@ import { spawn } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { randomUUID } from 'crypto'
+import { sanitizeFilename } from './utils'
 
 export interface DownloadOptions {
   embedThumbnail?: boolean
@@ -10,6 +10,7 @@ export interface DownloadOptions {
   embedMetadata?: boolean
   embedSubtitle?: boolean
   subtitleLanguage?: string
+  filename?: string
 }
 
 export interface DownloadStats {
@@ -42,8 +43,8 @@ class DownloadService {
     options: DownloadOptions,
     onProgress?: (stats: DownloadStats) => void,
   ): Promise<string> {
-    const uniqueId = contentId || randomUUID()
-    const outputPath = path.join(this.tempDir, `${contentId}-${randomUUID()}.%(ext)s`)
+    const sanitizedFilename = sanitizeFilename(options.filename || contentId)
+    const outputPath = path.join(this.tempDir, `${sanitizedFilename}.%(ext)s`)
     const args = this.buildYtDlpArgs(contentId, formatId, outputPath, options)
 
     return new Promise((resolve, reject) => {
@@ -66,7 +67,7 @@ class DownloadService {
         if (code === 0) {
           try {
             const files = await fs.promises.readdir(this.tempDir)
-            const downloadedFile = files.find((file) => file.startsWith(uniqueId))
+            const downloadedFile = files.find((file) => file.startsWith(sanitizedFilename))
             if (downloadedFile) {
               resolve(path.join(this.tempDir, downloadedFile))
             } else reject(new Error('Download completed but file not found'))
@@ -76,6 +77,10 @@ class DownloadService {
         } else reject(new Error(`Download failed with code ${code}`))
       })
     })
+  }
+
+  async downloadPlaylist() {
+    throw new Error('Method not implemented.')
   }
 
   private buildYtDlpArgs(contentId: string, formatId: string, outputPath: string, options: DownloadOptions): string[] {

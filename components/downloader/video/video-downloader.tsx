@@ -9,14 +9,14 @@ import VideoPreview from './video-preview'
 import FormatSelector from '../format-selector'
 import AdvancedOptions from '../advanced-options'
 import { AlertCircle, Check, Download } from 'lucide-react'
-import { useDownload } from '@/hooks/use-download'
+import { useVideoDownload } from '@/hooks/use-video-download'
 
 const VideoDownloader = ({ videoInfo }: { videoInfo: any }) => {
   const [selectedVideoFormat, setSelectedVideoFormat] = useState('')
   const [selectedAudioFormat, setSelectedAudioFormat] = useState('')
   const [advancedOptions, setAdvancedOptions] = useState({})
 
-  const { isDownloading, downloadComplete, error, downloadStats, startDownload } = useDownload()
+  const { isDownloading, downloadComplete, error, downloadStats, startDownload } = useVideoDownload()
   const handleDownload = () => {
     const videoFormat = videoInfo.videoFormats.find((f: any) => f.id === selectedVideoFormat)
     const audioFormat = videoInfo.audioFormats.find((f: any) => f.id === selectedAudioFormat)

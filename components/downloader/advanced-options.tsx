@@ -29,7 +29,6 @@ interface AdvancedOptionsProps {
 
 interface AdvancedOptionsState {
   filename: string
-  skipSponsor: boolean
   embedThumbnail: boolean
   embedChapter: boolean
   embedMetadata: boolean
@@ -42,7 +41,6 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
   const [showSubtitle, setShowSubtitle] = useState(false)
   const [options, setOptions] = useState<AdvancedOptionsState>({
     filename: filename,
-    skipSponsor: false,
     embedThumbnail: false,
     embedChapter: false,
     embedMetadata: false,
@@ -96,23 +94,6 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
                 </p>
               )}
             </div>
-
-            {/* Skip sponsor */}
-            <Label
-              htmlFor="skip-sponsor"
-              className="hover:bg-secondary flex min-h-10 w-full cursor-pointer items-center justify-between rounded-md transition-colors"
-            >
-              <div className="flex items-center space-x-2">
-                <SkipForward className="text-primary h-5 w-5" />
-                <span>Skip sponsor</span>
-              </div>
-              <Checkbox
-                id="skip-sponsor"
-                className="border-primary/40 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground h-5 w-5"
-                checked={options.skipSponsor}
-                onCheckedChange={(checked) => updateOptions('skipSponsor', checked)}
-              />
-            </Label>
 
             {/* Thumbnail */}
             <Label
