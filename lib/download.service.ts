@@ -9,6 +9,7 @@ export interface DownloadOptions {
   embedChapter?: boolean
   embedMetadata?: boolean
   embedSubtitle?: boolean
+  isAudioOnly?: boolean
   subtitleLanguage?: string
   filename?: string
 }
@@ -92,7 +93,7 @@ class DownloadService {
     if (options.embedSubtitle && options.subtitleLanguage)
       args.push('--embed-subs', '--sub-langs', options.subtitleLanguage)
     if (formatId.includes('+')) args.push('--merge-output-format', 'mp4')
-    else args.push('--extract-audio', '--audio-format', 'mp3')
+    else if (options.isAudioOnly) args.push('--extract-audio', '--audio-format', 'mp3')
     args.push('--', contentId)
     return args
   }

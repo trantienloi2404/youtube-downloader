@@ -21,12 +21,7 @@ const useVideoDownload = () => {
     progress: 0,
   })
 
-  const startDownload = async (
-    isAudioOnly: Boolean,
-    contentId: string,
-    formatId: string,
-    advancedOptions: any = {},
-  ) => {
+  const startDownload = async (contentId: string, formatId: string, advancedOptions: any = {}) => {
     try {
       setIsDownloading(true)
       setDownloadStats({
@@ -46,6 +41,7 @@ const useVideoDownload = () => {
           formatId,
           options: {
             filename: advancedOptions.filename,
+            isAudioOnly: advancedOptions.isAudioOnly,
             embedThumbnail: advancedOptions.embedThumbnail,
             embedChapter: advancedOptions.embedChapter,
             embedMetadata: advancedOptions.embedMetadata,

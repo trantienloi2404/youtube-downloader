@@ -18,15 +18,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-
+import { cn } from '@/lib/utils'
 interface AdvancedOptionsProps {
   filename: string
   subtitles: Array<Record<string, string>>
   isPlaylist?: boolean
+  isAudioOnly?: boolean
   onOptionsChange?: (options: AdvancedOptionsState) => void
 }
 
-interface AdvancedOptionsState {
+export interface AdvancedOptionsState {
   filename: string
   embedThumbnail: boolean
   embedChapter: boolean
@@ -35,7 +36,13 @@ interface AdvancedOptionsState {
   subtitleLanguage: string
 }
 
-const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsChange }: AdvancedOptionsProps) => {
+const AdvancedOptions = ({
+  filename,
+  subtitles,
+  isPlaylist = false,
+  isAudioOnly = false,
+  onOptionsChange,
+}: AdvancedOptionsProps) => {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showSubtitle, setShowSubtitle] = useState(false)
   const [options, setOptions] = useState<AdvancedOptionsState>({
@@ -51,10 +58,28 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
       const newOptions = { ...options, filename: filename }
       setOptions(newOptions)
       onOptionsChange?.(newOptions)
-    } else {
-      onOptionsChange?.(options)
     }
-  }, [filename, onOptionsChange])
+  }, [filename])
+
+  useEffect(() => {
+    if (isAudioOnly) {
+      const newOptions = {
+        ...options,
+        embedSubtitle: false,
+        subtitleLanguage: '',
+      }
+      if (options.embedSubtitle !== false || options.subtitleLanguage !== '') {
+        setOptions(newOptions)
+        onOptionsChange?.(newOptions)
+      }
+      setShowSubtitle(false)
+    } else {
+      setShowSubtitle(options.embedSubtitle)
+    }
+
+    onOptionsChange?.(options)
+  }, [isAudioOnly, options.embedSubtitle, onOptionsChange])
+
   const updateOptions = (key: keyof AdvancedOptionsState, value: any) => {
     const newOptions = { ...options, [key]: value }
     setOptions(newOptions)
@@ -157,7 +182,10 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
             {/* Subtitle */}
             <Label
               htmlFor="subtitle"
-              className="hover:bg-secondary flex min-h-10 w-full cursor-pointer items-center justify-between rounded-md transition-colors"
+              className={cn(
+                'hover:bg-secondary flex min-h-10 w-full items-center justify-between rounded-md transition-colors',
+                isAudioOnly ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+              )}
             >
               <div className="flex items-center space-x-2">
                 <SubtitlesIcon className="text-primary h-5 w-5" />
@@ -170,14 +198,12 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
                 onCheckedChange={(checked) => {
                   updateOptions('embedSubtitle', !!checked)
                   setShowSubtitle(!!checked)
-                  if (!!checked) {
-                    updateOptions('subtitleLanguage', '')
-                  }
                 }}
+                disabled={isAudioOnly}
               />
             </Label>
 
-            {showSubtitle && (
+            {showSubtitle && !isAudioOnly && (
               <div>
                 <h4 className="border-border mt-4 flex items-center border-b pb-2 font-medium">
                   <Languages className="text-primary mr-2 h-5 w-5" />
@@ -190,20 +216,27 @@ const AdvancedOptions = ({ filename, subtitles, isPlaylist = false, onOptionsCha
                   <Select
                     value={options.subtitleLanguage}
                     onValueChange={(value) => updateOptions('subtitleLanguage', value)}
+                    disabled={!options.embedSubtitle || isAudioOnly}
                   >
                     <SelectTrigger id="subtitle-language" className="border-primary/20 focus:border-primary/50">
                       <SelectValue placeholder="Select language" />
                     </SelectTrigger>
                     <SelectContent>
-                      {subtitles.map((item: any) => {
-                        const langKey = Object.keys(item)[0]
-                        const langValue = item[langKey]
-                        return (
-                          <SelectItem key={langKey} value={langKey}>
-                            {langValue} ({langKey})
-                          </SelectItem>
-                        )
-                      })}
+                      {subtitles && subtitles.length > 0 ? (
+                        subtitles.map((item: any) => {
+                          const langKey = Object.keys(item)[0]
+                          const langValue = item[langKey]
+                          return (
+                            <SelectItem key={langKey} value={langKey}>
+                              {langValue} ({langKey})
+                            </SelectItem>
+                          )
+                        })
+                      ) : (
+                        <SelectItem value="no-subs" disabled>
+                          No subtitles available
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

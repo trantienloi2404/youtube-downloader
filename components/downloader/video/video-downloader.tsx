@@ -7,21 +7,25 @@ import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import VideoPreview from './video-preview'
 import FormatSelector from '../format-selector'
-import AdvancedOptions from '../advanced-options'
+import AdvancedOptions, { AdvancedOptionsState } from '../advanced-options'
 import { AlertCircle, Check, Download } from 'lucide-react'
 import { useVideoDownload } from '@/hooks/use-video-download'
 
 const VideoDownloader = ({ videoInfo }: { videoInfo: any }) => {
   const [selectedVideoFormat, setSelectedVideoFormat] = useState('')
   const [selectedAudioFormat, setSelectedAudioFormat] = useState('')
-  const [advancedOptions, setAdvancedOptions] = useState({})
+  const [advancedOptions, setAdvancedOptions] = useState<AdvancedOptionsState | null>(null)
 
   const { isDownloading, downloadComplete, error, downloadStats, startDownload } = useVideoDownload()
+  const isAudioOnly = !selectedVideoFormat && !!selectedAudioFormat
   const handleDownload = () => {
-    const videoFormat = videoInfo.videoFormats.find((f: any) => f.id === selectedVideoFormat)
-    const audioFormat = videoInfo.audioFormats.find((f: any) => f.id === selectedAudioFormat)
-    const formatId = [videoFormat?.id, audioFormat?.id].filter(Boolean).join('+')
-    startDownload(false, videoInfo.id, formatId, advancedOptions)
+    const formatId = [selectedVideoFormat, selectedAudioFormat].filter(Boolean).join('+')
+    const finalOptions = {
+      ...(advancedOptions || {}),
+      filename: advancedOptions?.filename || videoInfo.title,
+      isAudioOnly: isAudioOnly,
+    }
+    startDownload(videoInfo.id, formatId, finalOptions)
   }
   const getDownloadButtonText = () => {
     if (isDownloading) return 'Downloading...'
@@ -49,6 +53,7 @@ const VideoDownloader = ({ videoInfo }: { videoInfo: any }) => {
             filename={videoInfo.title}
             subtitles={videoInfo.subtitles}
             isPlaylist={false}
+            isAudioOnly={isAudioOnly}
             onOptionsChange={setAdvancedOptions}
           />
           {isDownloading && (
