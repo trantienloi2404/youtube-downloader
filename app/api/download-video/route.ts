@@ -52,6 +52,7 @@ export async function GET(request: NextRequest) {
     if (!matchingFile) return NextResponse.json({ error: 'File not found' }, { status: 404 })
 
     const actualPath = path.join(tempDir, matchingFile)
+    const actualFilename = path.basename(actualPath)
     const stats = await fs.promises.stat(actualPath)
     const fileStream = fs.createReadStream(actualPath)
 
@@ -62,14 +63,23 @@ export async function GET(request: NextRequest) {
           controller.close()
           await downloadService.cleanup(actualPath)
         })
-        fileStream.on('error', (err) => controller.error(err))
+        fileStream.on('error', async (err) => {
+          controller.error(err)
+          await downloadService.cleanup(actualPath)
+        })
+      },
+      cancel: async (reason) => {
+        console.log('Stream cancelled:', reason)
+        fileStream.destroy()
+        await downloadService.cleanup(actualPath)
       },
     })
+    const encodedFilename = encodeURIComponent(actualFilename)
 
     return new NextResponse(stream, {
       headers: {
         'Content-Type': 'application/octet-stream',
-        'Content-Disposition': `attachment; filename="${actualPath.split(/[\\/]/).pop()}"`,
+        'Content-Disposition': `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`,
         'Content-Length': stats.size.toString(),
       },
     })

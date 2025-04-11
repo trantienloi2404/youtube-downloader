@@ -1,6 +1,6 @@
 'use client'
 
-import { sanitizeFilename, triggerDownload } from '@/lib/utils'
+import { getFilenameFromHeaders, sanitizeFilename, triggerDownload } from '@/lib/utils'
 import { useState } from 'react'
 
 interface DownloadStats {
@@ -21,7 +21,12 @@ const useVideoDownload = () => {
     progress: 0,
   })
 
-  const startDownload = async (isAudioOnly: Boolean, contentId: any, formatId: string, advancedOptions: any = {}) => {
+  const startDownload = async (
+    isAudioOnly: Boolean,
+    contentId: string,
+    formatId: string,
+    advancedOptions: any = {},
+  ) => {
     try {
       setIsDownloading(true)
       setDownloadStats({
@@ -50,9 +55,8 @@ const useVideoDownload = () => {
         }),
       })
 
-      if (!response.ok) throw new Error('Download failed - server error')
-      const reader = response.body?.getReader()
-      if (!reader) throw new Error('Download failed - invalid response')
+      if (!response.ok || !response.body) throw new Error('Download failed - server error')
+      const reader = response.body.getReader()
 
       const decoder = new TextDecoder()
       while (true) {
@@ -62,31 +66,16 @@ const useVideoDownload = () => {
             `/api/download-video?filename=${sanitizeFilename(advancedOptions.filename || contentId)}`,
             {
               method: 'GET',
-              headers: { 'Content-Type': 'application/json' },
             },
           )
-          if (!response.ok) {
+          if (!response.ok || !response.body) {
             const data = await response.json()
             throw new Error(data.error || 'Download failed')
           }
-
-          const reader = response.body?.getReader()
-          const contentLength = response.headers.get('Content-Length')
-          const contentDisposition = response.headers.get('Content-Disposition')
-          const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
-          const filename = filenameMatch ? filenameMatch[1] : contentId
-          if (!reader || !contentLength) throw new Error('Download failed - invalid response')
-
-          const chunks: Uint8Array[] = []
-          while (true) {
-            const { done, value } = await reader.read()
-            if (done) break
-            chunks.push(value)
-          }
-
-          const blob = new Blob(chunks)
+          const finalFilename = getFilenameFromHeaders(response.headers) || ''
+          const blob = await response.blob()
           setDownloadComplete(true)
-          triggerDownload(blob, filename)
+          triggerDownload(blob, finalFilename)
           break
         }
 

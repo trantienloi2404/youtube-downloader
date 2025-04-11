@@ -30,12 +30,46 @@ export function triggerDownload(blob: Blob, filename: string) {
 
 export function sanitizeFilename(filename: string): string {
   const invalidFsCharsRegex = /[\\/:*?"<>|\x00-\x1F]/g
-  const problematicCharsRegex = /[\u2014]/g
-  let sanitized = filename.replace(invalidFsCharsRegex, '_')
-  sanitized = sanitized.replace(problematicCharsRegex, '-')
+  let sanitized = filename.replace(invalidFsCharsRegex, ' ')
   sanitized = sanitized
     .replace(/_+/g, '_')
     .replace(/^[_ ]+|[_ ]+$/g, '')
     .trim()
   return sanitized
+}
+
+export function getFilenameFromHeaders(headers: Headers): string | null {
+  const contentDisposition = headers.get('Content-Disposition')
+  if (!contentDisposition) return null
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i)
+  if (utf8Match && utf8Match[1]) {
+    try {
+      return decodeURIComponent(utf8Match[1])
+    } catch (e) {
+      console.error('Error decoding filename*:', e)
+    }
+  }
+
+  const asciiMatch = contentDisposition.match(/filename="([^"]+)"/i)
+  if (asciiMatch && asciiMatch[1]) {
+    try {
+      return decodeURIComponent(asciiMatch[1])
+    } catch (e) {
+      console.error('Error decoding filename:', e)
+      return asciiMatch[1]
+    }
+  }
+
+  const plainMatch = contentDisposition.match(/filename=([^;]+)/i)
+  if (plainMatch && plainMatch[1]) {
+    try {
+      return decodeURIComponent(plainMatch[1])
+    } catch (e) {
+      console.error('Error decoding plain filename:', e)
+      return plainMatch[1]
+    }
+  }
+
+  return null
 }
