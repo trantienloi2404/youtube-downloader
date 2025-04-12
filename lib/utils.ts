@@ -29,13 +29,16 @@ export function triggerDownload(blob: Blob, filename: string) {
 }
 
 export function sanitizeFilename(filename: string): string {
-  const invalidFsCharsRegex = /[\\/:*?"<>|\x00-\x1F]/g
-  let sanitized = filename.replace(invalidFsCharsRegex, ' ')
-  sanitized = sanitized
-    .replace(/_+/g, '_')
-    .replace(/^[_ ]+|[_ ]+$/g, '')
-    .trim()
-  return sanitized
+  const invalidFsCharsRegex = /[\/:*?"<>|\x00-\x1F]/g
+  const multipleSpacesRegex = /\s+/g
+  const multipleUnderscoresRegex = /_+/g
+  const leadingTrailingUnderscoreSpaceRegex = /^[_ ]+|[_ ]+$/g
+
+  return filename
+    .replace(invalidFsCharsRegex, ' ')
+    .replace(multipleSpacesRegex, ' ')
+    .replace(multipleUnderscoresRegex, '_')
+    .replace(leadingTrailingUnderscoreSpaceRegex, '')
 }
 
 export function getFilenameFromHeaders(headers: Headers): string | null {
