@@ -20,7 +20,7 @@ const SiteHeader = () => {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button variant="ghost" size="sm" asChild className="rounded-full">
-            <Link href="https://github.com" target="_blank">
+            <Link href="https://github.com/trantienloi2404/youtube-downloader" target="_blank">
               <Github className="text-primary h-5 w-5" />
             </Link>
           </Button>

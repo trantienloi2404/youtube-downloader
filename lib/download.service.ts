@@ -42,7 +42,7 @@ class DownloadService {
     contentId: string,
     formatId: string,
     options: DownloadOptions,
-    onProgress?: (stats: DownloadStats) => void,
+    onProgress?: (chunk: string) => void,
   ): Promise<string> {
     const sanitizedFilename = sanitizeFilename(options.filename || contentId)
     const outputPath = path.join(this.tempDir, `${sanitizedFilename}.%(ext)s`)
@@ -50,16 +50,10 @@ class DownloadService {
 
     return new Promise((resolve, reject) => {
       const ytdlp = spawn('yt-dlp', args)
-      let lastProgress = 0
 
       ytdlp.stdout.on('data', (data) => {
         const output = data.toString()
-        const progressInfo = this.parseProgress(output)
-
-        if (progressInfo && Math.abs(progressInfo.progress - lastProgress) >= 2) {
-          lastProgress = progressInfo.progress
-          onProgress?.(progressInfo)
-        }
+        onProgress?.(output)
       })
 
       ytdlp.stderr.on('data', (data) => console.error(`yt-dlp error: ${data}`))

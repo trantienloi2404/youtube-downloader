@@ -14,22 +14,12 @@ const useVideoDownload = () => {
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadComplete, setDownloadComplete] = useState(false)
   const [error, setError] = useState(null)
-  const [downloadStats, setDownloadStats] = useState<DownloadStats>({
-    speed: '',
-    size: '',
-    eta: '',
-    progress: 0,
-  })
+  const [cmdOutput, setCmdOutput] = useState('')
 
   const startDownload = async (contentId: string, formatId: string, advancedOptions: any = {}) => {
     try {
       setIsDownloading(true)
-      setDownloadStats({
-        speed: '',
-        size: '',
-        eta: '',
-        progress: 0,
-      })
+      setCmdOutput('')
       setDownloadComplete(false)
       setError(null)
 
@@ -78,13 +68,7 @@ const useVideoDownload = () => {
         const events = decoder.decode(value).split('\n\n')
         for (const event of events) {
           if (!event.trim()) continue
-          const data = JSON.parse(event.replace('data: ', ''))
-          setDownloadStats({
-            speed: data.speed,
-            size: data.size,
-            eta: data.eta,
-            progress: data.progress,
-          })
+          setCmdOutput(event)
         }
       }
     } catch (err: any) {
@@ -98,7 +82,7 @@ const useVideoDownload = () => {
     isDownloading,
     downloadComplete,
     error,
-    downloadStats,
+    cmdOutput,
     startDownload,
   }
 }

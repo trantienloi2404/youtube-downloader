@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import VideoPreview from './video-preview'
 import FormatSelector from '../format-selector'
@@ -16,7 +15,7 @@ const VideoDownloader = ({ videoInfo }: { videoInfo: any }) => {
   const [selectedAudioFormat, setSelectedAudioFormat] = useState('')
   const [advancedOptions, setAdvancedOptions] = useState<AdvancedOptionsState | null>(null)
 
-  const { isDownloading, downloadComplete, error, downloadStats, startDownload } = useVideoDownload()
+  const { isDownloading, downloadComplete, error, cmdOutput, startDownload } = useVideoDownload()
   const isAudioOnly = !selectedVideoFormat && !!selectedAudioFormat
   const handleDownload = () => {
     const formatId = [selectedVideoFormat, selectedAudioFormat].filter(Boolean).join('+')
@@ -57,26 +56,9 @@ const VideoDownloader = ({ videoInfo }: { videoInfo: any }) => {
             onOptionsChange={setAdvancedOptions}
           />
           {isDownloading && (
-            <div className="bg-secondary/50 border-primary/10 animate-fadeIn space-y-2 rounded-lg border p-4">
-              <div className="flex justify-between text-sm">
-                <span>Downloading...</span>
-                <span className="text-primary font-medium">{Math.round(downloadStats.progress)}%</span>
-              </div>
-              <Progress value={downloadStats.progress} className="h-2" />
-              <div className="text-muted-foreground mt-2 grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="block font-medium">Speed</span>
-                  <span>{downloadStats.speed || 'Calculating...'}</span>
-                </div>
-                <div>
-                  <span className="block font-medium">Size</span>
-                  <span>{downloadStats.size || 'Calculating...'}</span>
-                </div>
-                <div>
-                  <span className="block font-medium">ETA</span>
-                  <span>{downloadStats.eta || 'Calculating...'}</span>
-                </div>
-              </div>
+            <div className="bg-secondary/50 border-primary/10 space-y-2 rounded-lg border p-4">
+              <p>Downloading...</p>
+              <span className="font-medium">{cmdOutput}</span>
             </div>
           )}
 
