@@ -61,17 +61,17 @@ export async function GET(request: NextRequest) {
         fileStream.on('data', (chunk) => controller.enqueue(chunk))
         fileStream.on('end', async () => {
           controller.close()
-          await downloadService.cleanup(actualPath)
+          await downloadService.cleanup()
         })
         fileStream.on('error', async (err) => {
           controller.error(err)
-          await downloadService.cleanup(actualPath)
+          await downloadService.cleanup()
         })
       },
       cancel: async (reason) => {
         console.log('Stream cancelled:', reason)
         fileStream.destroy()
-        await downloadService.cleanup(actualPath)
+        await downloadService.cleanup()
       },
     })
     const encodedFilename = encodeURIComponent(actualFilename)

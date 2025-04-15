@@ -41,8 +41,6 @@ const VideoDownloader = ({ videoInfo }: { videoInfo: any }) => {
       <Card className="border-primary/20 shadow-primary/5 overflow-hidden border shadow-lg">
         <CardContent className="space-y-6 p-6">
           <FormatSelector
-            videoFormats={videoInfo.videoFormats}
-            audioFormats={videoInfo.audioFormats}
             selectedVideoFormat={selectedVideoFormat}
             selectedAudioFormat={selectedAudioFormat}
             onSelectVideo={setSelectedVideoFormat}

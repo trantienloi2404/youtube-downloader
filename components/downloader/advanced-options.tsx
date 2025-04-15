@@ -223,12 +223,10 @@ const AdvancedOptions = ({
                     </SelectTrigger>
                     <SelectContent>
                       {subtitles && subtitles.length > 0 ? (
-                        subtitles.map((item: any) => {
-                          const langKey = Object.keys(item)[0]
-                          const langValue = item[langKey]
+                        subtitles.map(({ name, languageCode }: any) => {
                           return (
-                            <SelectItem key={langKey} value={langKey}>
-                              {langValue} ({langKey})
+                            <SelectItem key={languageCode} value={languageCode}>
+                              {name} ({languageCode})
                             </SelectItem>
                           )
                         })

@@ -23,9 +23,7 @@ async function getPlaylistInfo(playlistId: string) {
     title: firstVideo.playlist_title,
     author: firstVideo.channel,
     videoCount: playlistInfo.length,
-    thumbnail:
-      `https://i.ytimg.com/vi/${firstVideo.id}/maxresdefault.jpg` ||
-      `https://i.ytimg.com/vi/${firstVideo.id}/mqdefault.jpg`,
+    thumbnail: `https://i.ytimg.com/vi/${firstVideo.id}/maxresdefault.jpg`,
     videos: playlistInfo.map((videoInfo: any) => ({
       id: videoInfo.id,
       title: videoInfo.title,

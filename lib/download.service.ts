@@ -56,7 +56,9 @@ class DownloadService {
         onProgress?.(output)
       })
 
-      ytdlp.stderr.on('data', (data) => console.error(`yt-dlp error: ${data}`))
+      ytdlp.stderr.on('data', (data) => {
+        console.error(`yt-dlp error: ${data}`)
+      })
 
       ytdlp.on('close', async (code) => {
         if (code === 0) {
@@ -108,11 +110,12 @@ class DownloadService {
     return null
   }
 
-  async cleanup(filePath: string): Promise<void> {
+  async cleanup(): Promise<void> {
     try {
-      await fs.promises.unlink(filePath)
+      await fs.promises.rm(this.tempDir, { recursive: true, force: true })
+      console.log(`Successfully cleaned up temporary directory: ${this.tempDir}`)
     } catch (error) {
-      console.error('Failed to delete file:', error)
+      console.error(`Failed to delete temporary directory ${this.tempDir}:`, error)
     }
   }
 }

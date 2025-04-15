@@ -12,6 +12,7 @@ import PlaylistPreview from './playlist-preview'
 import PlaylistVideoItem from './playlist-video-item'
 import AdvancedOptions from '../advanced-options'
 import FormatSelector from '../format-selector'
+import { AUDIO_FORMATS, VIDEO_FORMATS } from '@/lib/constants'
 
 const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
   const [videos, setVideos] = useState(playlistInfo.videos)
@@ -157,8 +158,6 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
 
           {/* Format Selector */}
           <FormatSelector
-            videoFormats={VIDEO_FORMATS}
-            audioFormats={AUDIO_FORMATS}
             selectedVideoFormat={selectedVideoFormat}
             selectedAudioFormat={selectedAudioFormat}
             onSelectVideo={setSelectedVideoFormat}

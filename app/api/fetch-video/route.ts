@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { getVideoInfoById } from '@/lib/utils.server'
-import { formatAudioFormats, formatSubtitles, formatUploadDate, formatVideoFormats } from '@/lib/format-info'
+import { formatDuration, formatSubtitles, formatViewCount } from '@/lib/format-info'
 import { getVideoId } from '@/lib/utils'
+import Innertube from 'youtubei.js'
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,18 +17,16 @@ export async function POST(request: NextRequest) {
 }
 
 async function getVideoInfo(videoId: string) {
-  const videoInfo = await getVideoInfoById(['--dump-json', '--no-playlist', '--no-warnings'], videoId)
+  const youtube = await Innertube.create()
+  const { basic_info, captions } = await youtube.getBasicInfo(videoId)
   return {
-    id: videoInfo.id,
-    title: videoInfo.title,
-    author: videoInfo.channel,
-    duration: videoInfo.duration_string,
-    viewCount: videoInfo.view_count.toLocaleString(),
-    uploadDate: formatUploadDate(videoInfo.upload_date),
-    description: videoInfo.description,
-    thumbnail: videoInfo.thumbnail,
-    videoFormats: formatVideoFormats(videoInfo.formats),
-    audioFormats: formatAudioFormats(videoInfo.formats),
-    subtitles: formatSubtitles(videoInfo.subtitles),
+    id: basic_info.id,
+    title: basic_info.title,
+    author: basic_info.author,
+    duration: formatDuration(basic_info.duration),
+    viewCount: formatViewCount(basic_info.view_count),
+    description: basic_info.short_description,
+    thumbnail: `https://i.ytimg.com/vi/${basic_info.id}/maxresdefault.jpg`,
+    subtitles: formatSubtitles(captions?.caption_tracks),
   }
 }

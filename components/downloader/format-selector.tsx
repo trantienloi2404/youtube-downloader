@@ -1,10 +1,9 @@
 'use client'
 
 import { FileVideo, MusicIcon, Check, Circle } from 'lucide-react'
+import { AUDIO_FORMATS, VIDEO_FORMATS } from '@/lib/constants'
 
 interface FormatSelectorProps {
-  videoFormats: any[]
-  audioFormats: any[]
   selectedVideoFormat: string
   selectedAudioFormat: string
   onSelectVideo: (id: string) => void
@@ -12,8 +11,6 @@ interface FormatSelectorProps {
 }
 
 const FormatSelector = ({
-  videoFormats,
-  audioFormats,
   selectedVideoFormat,
   selectedAudioFormat,
   onSelectVideo,
@@ -55,11 +52,7 @@ const FormatSelector = ({
                 : 'border-primary/40'
             }`}
           >
-            {selectedFormat === '' ? (
-              <Check className="h-4 w-4" />
-            ) : (
-              <Circle className="h-4 w-4 opacity-30" />
-            )}
+            {selectedFormat === '' ? <Check className="h-4 w-4" /> : <Circle className="h-4 w-4 opacity-30" />}
           </div>
         </label>
 
@@ -76,25 +69,13 @@ const FormatSelector = ({
               }`}
               onClick={() => onSelect(format.id)}
             >
-              <div className="flex items-center">
-                <span className="font-medium">{format.label}</span>
-                <div className="text-muted-foreground mt-1 flex items-center text-sm">
-                  <span className="mx-2">•</span>
-                  <span>{format.size}</span>
-                </div>
-              </div>
+              <div className="flex items-center font-medium">{format.label}</div>
               <div
                 className={`flex h-6 w-6 items-center justify-center rounded-full border-2 transition-all ${
-                  isSelected
-                    ? 'border-primary bg-primary text-primary-foreground scale-110'
-                    : 'border-primary/40'
+                  isSelected ? 'border-primary bg-primary text-primary-foreground scale-110' : 'border-primary/40'
                 }`}
               >
-                {isSelected ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Circle className="h-4 w-4 opacity-30" />
-                )}
+                {isSelected ? <Check className="h-4 w-4" /> : <Circle className="h-4 w-4 opacity-30" />}
               </div>
             </label>
           )
@@ -107,29 +88,17 @@ const FormatSelector = ({
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="space-y-3">
-          {renderFormatColumn(
-            videoFormats,
-            'video',
-            selectedVideoFormat,
-            onSelectVideo,
-          )}
+          {renderFormatColumn(VIDEO_FORMATS, 'video', selectedVideoFormat, onSelectVideo)}
         </div>
         <div className="space-y-3">
-          {renderFormatColumn(
-            audioFormats,
-            'audio',
-            selectedAudioFormat,
-            onSelectAudio,
-          )}
+          {renderFormatColumn(AUDIO_FORMATS, 'audio', selectedAudioFormat, onSelectAudio)}
         </div>
       </div>
 
       <div className="bg-secondary/50 border-primary/10 rounded-lg border p-4">
         <p className="text-center text-sm">
           {!selectedVideoFormat && !selectedAudioFormat && (
-            <span className="text-yellow-500">
-              Please select at least one format to download
-            </span>
+            <span className="text-yellow-500">Please select at least one format to download</span>
           )}
           {selectedVideoFormat && !selectedAudioFormat && (
             <span>
