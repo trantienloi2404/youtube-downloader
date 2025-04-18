@@ -14,9 +14,9 @@ const VideoDownloader = ({ videoInfo }: { videoInfo: any }) => {
   const [selectedVideoFormat, setSelectedVideoFormat] = useState('')
   const [selectedAudioFormat, setSelectedAudioFormat] = useState('')
   const [advancedOptions, setAdvancedOptions] = useState<AdvancedOptionsState | null>(null)
-
   const { isDownloading, downloadComplete, error, cmdOutput, startDownload } = useVideoDownload()
   const isAudioOnly = !selectedVideoFormat && !!selectedAudioFormat
+
   const handleDownload = () => {
     const formatId = [selectedVideoFormat, selectedAudioFormat].filter(Boolean).join('+')
     const finalOptions = {

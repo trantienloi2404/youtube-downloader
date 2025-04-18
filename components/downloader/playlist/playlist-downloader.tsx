@@ -10,9 +10,9 @@ import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import PlaylistPreview from './playlist-preview'
 import PlaylistVideoItem from './playlist-video-item'
-import AdvancedOptions from '../advanced-options'
+import AdvancedOptions, { AdvancedOptionsState } from '../advanced-options'
 import FormatSelector from '../format-selector'
-import { AUDIO_FORMATS, VIDEO_FORMATS } from '@/lib/constants'
+import { usePlaylistDownload } from '@/hooks/use-playlist-download'
 
 const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
   const [videos, setVideos] = useState(playlistInfo.videos)
@@ -20,11 +20,9 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
   const [selectedAudioFormat, setSelectedAudioFormat] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [isAllSelected, setIsAllSelected] = useState(true)
-  const [isDownloading, setIsDownloading] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [downloadedCount, setDownloadedCount] = useState(0)
-  const [isComplete, setIsComplete] = useState(false)
-  const [error, setError] = useState('')
+  const [advancedOptions, setAdvancedOptions] = useState<AdvancedOptionsState | null>(null)
+  const { isDownloading, downloadComplete, error, cmdOutput, startDownload } = usePlaylistDownload()
+  const isAudioOnly = !selectedVideoFormat && !!selectedAudioFormat
 
   const filteredVideos = videos.filter((video: any) => video.title.toLowerCase().includes(searchTerm.toLowerCase()))
   const handleSelectAll = () => {
@@ -38,44 +36,22 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
   }
   const handleDownload = () => {
     if (!selectedVideoFormat && !selectedAudioFormat) {
-      setError('Please select at least one format (video or audio)')
+      // setError('Please select at least one format (video or audio)')
       return
     }
 
     const selectedVideos = videos.filter((v: any) => v.selected)
     if (selectedVideos.length === 0) {
-      setError('Please select at least one video')
+      // setError('Please select at least one video')
       return
     }
 
-    setError('')
-    setIsDownloading(true)
-    setProgress(0)
-    setDownloadedCount(0)
-    setIsComplete(false)
-
-    // Simulate download progress
-    const totalVideos = selectedVideos.length
-    let currentVideo = 0
-
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          currentVideo++
-          setDownloadedCount(currentVideo)
-
-          if (currentVideo >= totalVideos) {
-            clearInterval(interval)
-            setIsDownloading(false)
-            setIsComplete(true)
-            return 100
-          }
-
-          return 0
-        }
-        return prev + 5
-      })
-    }, 200)
+    const formatId = [selectedVideoFormat, selectedAudioFormat].filter(Boolean).join('+')
+    const finalOptions = {
+      ...(advancedOptions || {}),
+      isAudioOnly: isAudioOnly,
+    }
+    startDownload(playlistInfo.id, formatId, finalOptions)
   }
   const getDownloadButtonText = () => {
     if (isDownloading) return `Downloading ${videos.filter((v: any) => v.selected).length} videos...`
@@ -165,7 +141,13 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
           />
 
           {/* Advanced Options */}
-          {/* <AdvancedOptions /> */}
+          <AdvancedOptions
+            filename={playlistInfo.title}
+            subtitles={playlistInfo.subtitles}
+            isPlaylist={false}
+            isAudioOnly={isAudioOnly}
+            onOptionsChange={setAdvancedOptions}
+          />
 
           {/* Error Alert */}
           {error && (
@@ -178,18 +160,13 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
           {/* Download Progress */}
           {isDownloading && (
             <div className="bg-secondary/50 border-primary/10 space-y-2 rounded-lg border p-4">
-              <div className="flex justify-between text-sm">
-                <span>
-                  Downloading {downloadedCount}/{videos.filter((v: any) => v.selected).length}
-                </span>
-                <span className="text-primary font-medium">{Math.round(progress)}%</span>
-              </div>
-              <Progress value={progress} className="h-2" />
+              <p>Downloading...</p>
+              <span className="font-medium">{cmdOutput}</span>
             </div>
           )}
 
           {/* Download Complete */}
-          {isComplete && (
+          {downloadComplete && (
             <div className="space-y-2 rounded-lg border border-green-800 bg-green-900/20 p-4">
               <div className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-green-500" />
