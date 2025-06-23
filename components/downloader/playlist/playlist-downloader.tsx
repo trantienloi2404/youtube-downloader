@@ -51,7 +51,7 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
       ...(advancedOptions || {}),
       isAudioOnly: isAudioOnly,
     }
-    startDownload(playlistInfo.id, formatId, finalOptions)
+    startDownload(playlistInfo.id, formatId, finalOptions, selectedVideos)
   }
   const getDownloadButtonText = () => {
     if (isDownloading) return `Downloading ${videos.filter((v: any) => v.selected).length} videos...`
@@ -119,13 +119,16 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
             ) : (
               filteredVideos.map((video: any, index: number) => (
                 <PlaylistVideoItem
-                  key={index}
+                  key={video.id}
                   video={video}
                   onToggleSelect={() => {
                     const updatedVideos = [...videos]
-                    updatedVideos[index].selected = !updatedVideos[index].selected
-                    setVideos(updatedVideos)
-                    setIsAllSelected(updatedVideos.every((v) => v.selected))
+                    const videoIndex = updatedVideos.findIndex(v => v.id === video.id)
+                    if (videoIndex !== -1) {
+                      updatedVideos[videoIndex].selected = !updatedVideos[videoIndex].selected
+                      setVideos(updatedVideos)
+                      setIsAllSelected(updatedVideos.every((v) => v.selected))
+                    }
                   }}
                 />
               ))

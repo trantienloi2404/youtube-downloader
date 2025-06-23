@@ -9,7 +9,12 @@ const usePlaylistDownload = () => {
   const [error, setError] = useState(null)
   const [cmdOutput, setCmdOutput] = useState('')
 
-  const startDownload = async (contentId: string, formatId: string, advancedOptions: any = {}) => {
+  const startDownload = async (
+    playlistId: string,
+    formatId: string, 
+    advancedOptions: any = {}, 
+    selectedVideos?: any[]
+  ) => {
     try {
       setIsDownloading(true)
       setCmdOutput('')
@@ -20,8 +25,9 @@ const usePlaylistDownload = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contentId,
+          contentId: playlistId,
           formatId,
+          selectedVideos: selectedVideos || [],
           options: {
             filename: advancedOptions.filename,
             isAudioOnly: advancedOptions.isAudioOnly,
@@ -42,7 +48,7 @@ const usePlaylistDownload = () => {
         const { done, value } = await reader.read()
         if (done) {
           const response = await fetch(
-            `/api/download-playlist?filename=${sanitizeFilename(`${advancedOptions.filename}.zip` || contentId)}`,
+            `/api/download-playlist?filename=${sanitizeFilename(`${advancedOptions.filename}.zip` || playlistId)}`,
             {
               method: 'GET',
             },

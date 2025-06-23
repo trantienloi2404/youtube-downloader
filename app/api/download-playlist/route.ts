@@ -7,7 +7,7 @@ import { sanitizeFilename } from '@/lib/utils'
 
 export async function POST(request: NextRequest) {
   try {
-    const { contentId, formatId, options } = await request.json()
+    const { contentId, formatId, options, selectedVideos } = await request.json()
     if (!contentId || !formatId)
       return NextResponse.json({ error: 'Content id and format id are required' }, { status: 400 })
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const writer = stream.writable.getWriter()
 
     downloadService
-      .downloadPlaylist(contentId, formatId, options, async (stats) => {
+      .downloadPlaylist(contentId, formatId, options, selectedVideos, async (stats) => {
         await writer.write(encoder.encode(`data: ${JSON.stringify(stats)}\n\n`))
       })
       .catch(async (error) => {

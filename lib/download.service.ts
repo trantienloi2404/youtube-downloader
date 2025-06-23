@@ -100,6 +100,7 @@ class DownloadService {
     playlistId: string,
     formatId: string,
     options: DownloadOptions,
+    selectedVideos: any[] = [],
     onProgress?: (chunk: string) => void,
   ): Promise<string> {
     const sanitizedPlaylistTitle = sanitizeFilename(options.filename || playlistId)
@@ -107,11 +108,14 @@ class DownloadService {
     const playlistSubDir = path.join(this.tempDir, `${sanitizedPlaylistTitle}_${Date.now()}`)
     await fs.promises.mkdir(playlistSubDir, { recursive: true })
 
-    const outputPathTemplate = path.join(playlistSubDir, `%(playlist_index)s - %(title)s.%(ext)s`)
-
-    const args = this.buildYtDlpArgs(playlistId, formatId, outputPathTemplate, options, true)
-
     const zipFilePath = path.join(this.tempDir, `${sanitizedPlaylistTitle}.zip`)
+
+    if (selectedVideos && selectedVideos.length > 0) {
+      return this.downloadSelectedVideos(selectedVideos, formatId, options, playlistSubDir, zipFilePath, onProgress)
+    }
+
+    const outputPathTemplate = path.join(playlistSubDir, `%(playlist_index)s - %(title)s.%(ext)s`)
+    const args = this.buildYtDlpArgs(playlistId, formatId, outputPathTemplate, options, true)
 
     return new Promise((resolve, reject) => {
       const ytdlp = spawn('yt-dlp', args)
@@ -119,7 +123,6 @@ class DownloadService {
 
       ytdlp.stdout.on('data', (data) => {
         const output = data.toString()
-
         onProgress?.(output)
       })
 
@@ -160,9 +163,7 @@ class DownloadService {
             })
 
             archive.pipe(outputZip)
-
             archive.directory(playlistSubDir, false)
-
             await archive.finalize()
           } catch (zipError) {
             console.error('Error during zipping:', zipError)
@@ -200,6 +201,102 @@ class DownloadService {
           )
         reject(new Error(`Failed to start download process: ${err.message}`))
       })
+    })
+  }
+
+  private async downloadSelectedVideos(
+    selectedVideos: any[],
+    formatId: string,
+    options: DownloadOptions,
+    playlistSubDir: string,
+    zipFilePath: string,
+    onProgress?: (chunk: string) => void,
+  ): Promise<string> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let completedVideos = 0
+        const totalVideos = selectedVideos.length
+
+        for (const video of selectedVideos) {
+          const videoId = video.id
+          const videoTitle = sanitizeFilename(video.title || videoId)
+          const outputPath = path.join(playlistSubDir, `${video.index || completedVideos + 1} - ${videoTitle}.%(ext)s`)
+          
+          onProgress?.(`data: Downloading ${completedVideos + 1}/${totalVideos}: ${video.title}\n\n`)
+
+          const args = this.buildYtDlpArgs(videoId, formatId, outputPath, options, false)
+
+          await new Promise<void>((resolveVideo, rejectVideo) => {
+            const ytdlp = spawn('yt-dlp', args)
+            let stderrOutput = ''
+
+            ytdlp.stdout.on('data', (data) => {
+              const output = data.toString()
+              onProgress?.(output)
+            })
+
+            ytdlp.stderr.on('data', (data) => {
+              stderrOutput += data.toString()
+              console.error(`yt-dlp stderr: ${data}`)
+            })
+
+            ytdlp.on('close', (code) => {
+              if (code === 0) {
+                completedVideos++
+                resolveVideo()
+              } else {
+                console.error(`Video ${videoId} download failed with code ${code}:`, stderrOutput)
+                completedVideos++
+                resolveVideo()
+              }
+            })
+
+            ytdlp.on('error', (err) => {
+              console.error(`Failed to start yt-dlp for video ${videoId}:`, err)
+              completedVideos++
+              resolveVideo()
+            })
+          })
+        }
+
+        onProgress?.('data: Zipping files...\n\n')
+        const outputZip = fs.createWriteStream(zipFilePath)
+        const archive = archiver('zip', {
+          zlib: { level: 9 },
+        })
+
+        outputZip.on('close', () => {
+          onProgress?.('data: Zipping complete.\n\n')
+          fs.promises
+            .rm(playlistSubDir, { recursive: true, force: true })
+            .then(() => console.log(`Cleaned up ${playlistSubDir}`))
+            .catch((err) => console.error(`Failed to clean up ${playlistSubDir}:`, err))
+          resolve(zipFilePath)
+        })
+
+        archive.on('warning', (err) => {
+          if (err.code === 'ENOENT') {
+            console.warn('Archiver warning:', err)
+          } else {
+            reject(err)
+          }
+        })
+
+        archive.on('error', (err) => {
+          reject(err)
+        })
+
+        archive.pipe(outputZip)
+        archive.directory(playlistSubDir, false)
+        await archive.finalize()
+
+      } catch (error) {
+        console.error('Error in downloadSelectedVideos:', error)
+        fs.promises
+          .rm(playlistSubDir, { recursive: true, force: true })
+          .catch((err) => console.error(`Failed cleanup after error for ${playlistSubDir}:`, err))
+        reject(error)
+      }
     })
   }
 
