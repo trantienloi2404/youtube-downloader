@@ -2,7 +2,7 @@
 
 A modern web application built with Next.js that allows you to download YouTube videos and playlists with various customization options. Features a beautiful UI with real-time progress tracking and download cancellation.
 
-![YouTube Downloader](https://github.com/user-attachments/assets/65407e96-5302-40fc-8559-4b42023b5eb2)
+https://github.com/user-attachments/assets/65407e96-5302-40fc-8559-4b42023b5eb2
 
 ## ✨ Features
 
