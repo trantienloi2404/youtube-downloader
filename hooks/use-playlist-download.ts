@@ -1,13 +1,37 @@
 'use client'
 
 import { getFilenameFromHeaders, sanitizeFilename, triggerDownload } from '@/lib/utils'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const usePlaylistDownload = () => {
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadComplete, setDownloadComplete] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
   const [cmdOutput, setCmdOutput] = useState('')
+  const abortControllerRef = useRef<AbortController | null>(null)
+
+  // Handle tab closure cancellation
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (isDownloading && abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [isDownloading])
+
+  const cancelDownload = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      setIsDownloading(false)
+      setError('Download cancelled by user')
+      setCmdOutput('')
+    }
+  }
 
   const startDownload = async (
     playlistId: string,
@@ -20,6 +44,9 @@ const usePlaylistDownload = () => {
       setCmdOutput('')
       setDownloadComplete(false)
       setError(null)
+
+      // Create new AbortController for this download
+      abortControllerRef.current = new AbortController()
 
       const response = await fetch('/api/download-playlist', {
         method: 'POST',
@@ -38,6 +65,7 @@ const usePlaylistDownload = () => {
             subtitleLanguage: advancedOptions.subtitleLanguage,
           },
         }),
+        signal: abortControllerRef.current.signal,
       })
 
       if (!response.ok || !response.body) throw new Error('Download failed - server error')
@@ -51,6 +79,7 @@ const usePlaylistDownload = () => {
             `/api/download-playlist?filename=${sanitizeFilename(`${advancedOptions.filename}.zip` || playlistId)}`,
             {
               method: 'GET',
+              signal: abortControllerRef.current.signal,
             },
           )
           if (!response.ok || !response.body) {
@@ -71,9 +100,14 @@ const usePlaylistDownload = () => {
         }
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred while downloading')
+      if (err.name === 'AbortError') {
+        setError('Download cancelled')
+      } else {
+        setError(err.message || 'An error occurred while downloading')
+      }
     } finally {
       setIsDownloading(false)
+      abortControllerRef.current = null
     }
   }
 
@@ -83,6 +117,7 @@ const usePlaylistDownload = () => {
     error,
     cmdOutput,
     startDownload,
+    cancelDownload,
   }
 }
 

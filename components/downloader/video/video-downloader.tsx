@@ -7,14 +7,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import VideoPreview from './video-preview'
 import FormatSelector from '../format-selector'
 import AdvancedOptions, { AdvancedOptionsState } from '../advanced-options'
-import { AlertCircle, Check, Download } from 'lucide-react'
+import { AlertCircle, Check, Download, X } from 'lucide-react'
 import { useVideoDownload } from '@/hooks/use-video-download'
 
 const VideoDownloader = ({ videoInfo }: { videoInfo: any }) => {
   const [selectedVideoFormat, setSelectedVideoFormat] = useState('')
   const [selectedAudioFormat, setSelectedAudioFormat] = useState('')
   const [advancedOptions, setAdvancedOptions] = useState<AdvancedOptionsState | null>(null)
-  const { isDownloading, downloadComplete, error, cmdOutput, startDownload } = useVideoDownload()
+  const { isDownloading, downloadComplete, error, cmdOutput, startDownload, cancelDownload } = useVideoDownload()
   const isAudioOnly = !selectedVideoFormat && !!selectedAudioFormat
 
   const handleDownload = () => {
@@ -26,6 +26,11 @@ const VideoDownloader = ({ videoInfo }: { videoInfo: any }) => {
     }
     startDownload(videoInfo.id, formatId, finalOptions)
   }
+
+  const handleCancel = () => {
+    cancelDownload()
+  }
+
   const getDownloadButtonText = () => {
     if (isDownloading) return 'Downloading...'
     if (selectedVideoFormat && selectedAudioFormat) return 'Download Video with Audio'
@@ -76,14 +81,35 @@ const VideoDownloader = ({ videoInfo }: { videoInfo: any }) => {
               </div>
             </div>
           )}
-          <Button
-            className="w-full bg-gradient-to-r from-blue-600 to-violet-600 py-6 transition-all duration-300 hover:from-blue-700 hover:to-violet-700"
-            onClick={handleDownload}
-            disabled={isDownloading || (!selectedVideoFormat && !selectedAudioFormat)}
-          >
-            <Download className="mr-2 h-5 w-5" />
-            {getDownloadButtonText()}
-          </Button>
+          
+          {isDownloading ? (
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 bg-gradient-to-r from-blue-600 to-violet-600 py-6 transition-all duration-300 hover:from-blue-700 hover:to-violet-700"
+                disabled
+              >
+                <Download className="mr-2 h-5 w-5" />
+                Downloading...
+              </Button>
+              <Button
+                variant="destructive"
+                className="px-6 py-6"
+                onClick={handleCancel}
+              >
+                <X className="h-5 w-5" />
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button
+              className="w-full bg-gradient-to-r from-blue-600 to-violet-600 py-6 transition-all duration-300 hover:from-blue-700 hover:to-violet-700"
+              onClick={handleDownload}
+              disabled={!selectedVideoFormat && !selectedAudioFormat}
+            >
+              <Download className="mr-2 h-5 w-5" />
+              {getDownloadButtonText()}
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>

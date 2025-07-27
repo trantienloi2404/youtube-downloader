@@ -15,16 +15,27 @@ export async function POST(request: NextRequest) {
     const stream = new TransformStream()
     const writer = stream.writable.getWriter()
 
+    // Handle request cancellation
+    const abortController = new AbortController()
+    request.signal.addEventListener('abort', () => {
+      abortController.abort()
+      downloadService.cleanup()
+    })
+
     downloadService
       .downloadPlaylist(contentId, formatId, options, selectedVideos, async (stats) => {
+        if (abortController.signal.aborted) return
         await writer.write(encoder.encode(`data: ${JSON.stringify(stats)}\n\n`))
-      })
+      }, abortController.signal)
       .catch(async (error) => {
+        if (abortController.signal.aborted) return
         console.error('Download failed:', error)
         await writer.write(encoder.encode(`data: ${JSON.stringify({ error: error.message })}\n\n`))
       })
       .finally(async () => {
-        await writer.close()
+        if (!abortController.signal.aborted) {
+          await writer.close()
+        }
       })
 
     return new Response(stream.readable, {

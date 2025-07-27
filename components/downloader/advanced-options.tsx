@@ -47,9 +47,9 @@ const AdvancedOptions = ({
   const [showSubtitle, setShowSubtitle] = useState(false)
   const [options, setOptions] = useState<AdvancedOptionsState>({
     filename: filename,
-    embedThumbnail: false,
-    embedChapter: false,
-    embedMetadata: false,
+    embedThumbnail: true,
+    embedChapter: true,
+    embedMetadata: true,
     embedSubtitle: false,
     subtitleLanguage: '',
   })

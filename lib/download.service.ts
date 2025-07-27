@@ -44,6 +44,7 @@ class DownloadService {
     formatId: string,
     options: DownloadOptions,
     onProgress?: (chunk: string) => void,
+    abortSignal?: AbortSignal,
   ): Promise<string> {
     const sanitizedFilename = sanitizeFilename(options.filename || contentId)
 
@@ -53,6 +54,15 @@ class DownloadService {
     return new Promise((resolve, reject) => {
       const ytdlp = spawn('yt-dlp', args)
       let stderrOutput = ''
+
+      // Handle abort signal
+      if (abortSignal) {
+        abortSignal.addEventListener('abort', () => {
+          console.log('Download cancelled, killing yt-dlp process')
+          ytdlp.kill('SIGTERM')
+          reject(new Error('Download cancelled'))
+        })
+      }
 
       ytdlp.stdout.on('data', (data) => {
         const output = data.toString()
@@ -102,6 +112,7 @@ class DownloadService {
     options: DownloadOptions,
     selectedVideos: any[] = [],
     onProgress?: (chunk: string) => void,
+    abortSignal?: AbortSignal,
   ): Promise<string> {
     const sanitizedPlaylistTitle = sanitizeFilename(options.filename || playlistId)
 
@@ -111,7 +122,7 @@ class DownloadService {
     const zipFilePath = path.join(this.tempDir, `${sanitizedPlaylistTitle}.zip`)
 
     if (selectedVideos && selectedVideos.length > 0) {
-      return this.downloadSelectedVideos(selectedVideos, formatId, options, playlistSubDir, zipFilePath, onProgress)
+      return this.downloadSelectedVideos(selectedVideos, formatId, options, playlistSubDir, zipFilePath, onProgress, abortSignal)
     }
 
     const outputPathTemplate = path.join(playlistSubDir, `%(playlist_index)s - %(title)s.%(ext)s`)
@@ -120,6 +131,15 @@ class DownloadService {
     return new Promise((resolve, reject) => {
       const ytdlp = spawn('yt-dlp', args)
       let stderrOutput = ''
+
+      // Handle abort signal
+      if (abortSignal) {
+        abortSignal.addEventListener('abort', () => {
+          console.log('Playlist download cancelled, killing yt-dlp process')
+          ytdlp.kill('SIGTERM')
+          reject(new Error('Download cancelled'))
+        })
+      }
 
       ytdlp.stdout.on('data', (data) => {
         const output = data.toString()
@@ -211,11 +231,13 @@ class DownloadService {
     playlistSubDir: string,
     zipFilePath: string,
     onProgress?: (chunk: string) => void,
+    abortSignal?: AbortSignal,
   ): Promise<string> {
     return new Promise(async (resolve, reject) => {
       try {
         let completedVideos = 0
         const totalVideos = selectedVideos.length
+        const processes: any[] = []
 
         for (const video of selectedVideos) {
           const videoId = video.id
@@ -228,7 +250,17 @@ class DownloadService {
 
           await new Promise<void>((resolveVideo, rejectVideo) => {
             const ytdlp = spawn('yt-dlp', args)
+            processes.push(ytdlp)
             let stderrOutput = ''
+
+            // Handle abort signal
+            if (abortSignal) {
+              abortSignal.addEventListener('abort', () => {
+                console.log('Selected videos download cancelled, killing all yt-dlp processes')
+                processes.forEach(process => process.kill('SIGTERM'))
+                reject(new Error('Download cancelled'))
+              })
+            }
 
             ytdlp.stdout.on('data', (data) => {
               const output = data.toString()

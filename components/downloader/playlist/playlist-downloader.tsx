@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Filter, Download, Square, Check, AlertCircle } from 'lucide-react'
+import { Search, Filter, Download, Square, Check, AlertCircle, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [isAllSelected, setIsAllSelected] = useState(true)
   const [advancedOptions, setAdvancedOptions] = useState<AdvancedOptionsState | null>(null)
-  const { isDownloading, downloadComplete, error, cmdOutput, startDownload } = usePlaylistDownload()
+  const { isDownloading, downloadComplete, error, cmdOutput, startDownload, cancelDownload } = usePlaylistDownload()
   const isAudioOnly = !selectedVideoFormat && !!selectedAudioFormat
 
   const filteredVideos = videos.filter((video: any) => video.title.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -53,6 +53,11 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
     }
     startDownload(playlistInfo.id, formatId, finalOptions, selectedVideos)
   }
+
+  const handleCancel = () => {
+    cancelDownload()
+  }
+
   const getDownloadButtonText = () => {
     if (isDownloading) return `Downloading ${videos.filter((v: any) => v.selected).length} videos...`
 
@@ -181,18 +186,37 @@ const PlaylistDownloader = ({ playlistInfo }: { playlistInfo: any }) => {
             </div>
           )}
 
-          <Button
-            className="w-full bg-gradient-to-r from-blue-600 to-violet-600 py-6 transition-all duration-300 hover:from-blue-700 hover:to-violet-700"
-            onClick={handleDownload}
-            disabled={
-              isDownloading ||
-              (!selectedVideoFormat && !selectedAudioFormat) ||
-              videos.filter((v: any) => v.selected).length === 0
-            }
-          >
-            <Download className="mr-2 h-5 w-5" />
-            {getDownloadButtonText()}
-          </Button>
+          {isDownloading ? (
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 bg-gradient-to-r from-blue-600 to-violet-600 py-6 transition-all duration-300 hover:from-blue-700 hover:to-violet-700"
+                disabled
+              >
+                <Download className="mr-2 h-5 w-5" />
+                {getDownloadButtonText()}
+              </Button>
+              <Button
+                variant="destructive"
+                className="px-6 py-6"
+                onClick={handleCancel}
+              >
+                <X className="h-5 w-5" />
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button
+              className="w-full bg-gradient-to-r from-blue-600 to-violet-600 py-6 transition-all duration-300 hover:from-blue-700 hover:to-violet-700"
+              onClick={handleDownload}
+              disabled={
+                (!selectedVideoFormat && !selectedAudioFormat) ||
+                videos.filter((v: any) => v.selected).length === 0
+              }
+            >
+              <Download className="mr-2 h-5 w-5" />
+              {getDownloadButtonText()}
+            </Button>
+          )}
         </CardContent>
       </Card>
     </div>
